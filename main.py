@@ -6,6 +6,7 @@ import sqlite3
 
 from bs4 import BeautifulSoup
 from pprint import PrettyPrinter
+from spider import JDSpider
 
 headers_name = {
     "referer": "https://mall.jd.com/",
@@ -76,16 +77,13 @@ if __name__ == '__main__':
         query_results = c.execute(sql)
         args['pids'] = [one[0] for one in query_results]
     failed_pids = []
+    spider = JDSpider()
+    
     for pid in args['pids']:
-        try:
-            grab_product_info(pid)
-        except requests.exceptions.ConnectionError as e:
+        if spider(pid) != 0:
             failed_pids.append(pid)
-            logger.error("pid: {:<16} {}".format(pid, str(e)))
     if len(failed_pids) > 0:
         logger.warning("grab failed products again")
     for pid in failed_pids:
-        try:
-            grab_product_info(pid)
-        except requests.exceptions.ConnectionError as e:
-            logger.error("pid: {:<16} {}".format(pid, str(e)))
+        if spider(pid) != 0:
+            logger.error("{:<16} grab fail again".format(pid))
