@@ -205,12 +205,13 @@ def main(args):
 
 
 if __name__ == '__main__':
+    default_logpath = "log/{}-01.log".format(time.strftime("%Y-%m"))
     parser = argparse.ArgumentParser(description="python JD spider")
     parser.add_argument('-a', '--add', action='store_true', default=False, help='是否添加新商品')
     parser.add_argument('-d', '--del', action='store_true', default=False, help='是否删除商品')
     parser.add_argument('-p', '--pids', type=str, default=None, nargs='+', help='商品id')
     parser.add_argument('-db', '--database', type=str, default='db/products.db', help='存放商品信息的数据库的路径')
-    parser.add_argument('-l', '--log', type=str, default=None, help='运行日志路径')
+    parser.add_argument('-l', '--log', type=str, default=default_logpath, help='运行日志路径')
     parser.add_argument('-s', '--sql', type=str, default='db/build_db.sql', help='创建数据库sql')
     args = vars(parser.parse_args())
     PrettyPrinter().pprint(args)
