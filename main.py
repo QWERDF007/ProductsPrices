@@ -140,14 +140,18 @@ def del_products(logger, conn, db_pids):
 def query_products(logger, conn, logpath=None, step=25):
     sql = "SELECT pid FROM products"
     db_products = conn.execute(sql)
-    pids = [one[0] for one in db_products]
-    groups = [pids[i:i + step] for i in range(0, len(pids), step)]
+    db_pids = [one[0] for one in db_products]
+    total = len(db_pids)
+    groups = [db_pids[i:i + step] for i in range(0, total, step)]
     spider = JDSpider(logpath)
     prices = list()
     for i, pids in enumerate(groups):
         prices += spider.get_prices(pids)
-        logger.info("group_{}: {} - {}".format(i, i * 25, (i + 1) * 25))
+        start = i * 25
+        end = start + len(pids)
+        logger.info("group_{}: {} - {}".format(i, start, end))
     record_price(conn, prices)
+    total = len(prices)
     for pid, price in prices:
         over = None
         if price is not None:
@@ -160,7 +164,7 @@ def query_products(logger, conn, logpath=None, step=25):
         for pid, product in products_to_update.items():
             logger.info("update pid: {:<16} price: ￥{:<16} over: {}".format(
                 pid, product['price'], product['over']))
-    logger.info("record products: {:<8} update products: {:<8}".format(len(pids), update_size))
+    logger.info("record products: {:<8} update products: {:<8}".format(total, update_size))
 
 
 def main(args):
