@@ -139,12 +139,16 @@ def del_products(logger, conn, db_pids):
         exit(0)
 
 
-def query_products(logger, conn, logpath=None):
+def query_products(logger, conn, logpath=None, step=25):
     sql = "SELECT pid FROM products"
     db_products = conn.execute(sql)
-    pids = {one[0] for one in db_products}
+    pids = [one[0] for one in db_products]
+    groups = [pids[i:i + step] for i in range(0, len(pids), step)]
     spider = JDSpider(logpath)
-    prices = spider.get_prices(pids)
+    prices = list()
+    for i, pids in enumerate(groups):
+        prices += spider.get_prices(pids)
+        logger.info("group_{}: {} - {}".format(i, i * 25, (i + 1) * 25))
     record_price(conn, prices)
     for pid, price in prices:
         over = None
