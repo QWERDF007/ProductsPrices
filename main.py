@@ -105,8 +105,6 @@ def add_products(logger, conn, db_pids, logpath):
         products = dict()
         for pid in pids_to_add:
             shop, name, tip = spider.get_shop_name(pid)
-            sec = random.randint(1, 5)
-            time.sleep(sec)
             over = True if tip is not None else False
             href = 'https://item.jd.com/' + pid + '.html'
             products[pid] = {"href": href, "shop": shop, "name": name, "over": over, "tip": tip}
