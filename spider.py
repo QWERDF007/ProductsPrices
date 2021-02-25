@@ -110,6 +110,9 @@ class JDSpider:
         "Referer": "https://item.jd.com/",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
     }
+    PROXY = {
+        'http': "127.0.0.1:1080"
+    }
     BASIC_URL = "https://item.jd.com/"
     PRICE_URL = "https://p.3.cn/prices/mgets"
 
@@ -120,24 +123,25 @@ class JDSpider:
 
     def __call__(self, pid):
         try:
-            shop, name, item_over = self._get_shop_name(pid)
+            shop, name, item_over = self.get_shop_name(pid)
             price = self._get_price(pid)
             if item_over is None:
                 self._logger.info("{:<16} shop: {} name: {} price: ￥{}".format(pid, shop, name, price))
             else:
                 self._logger.warning(
                     "{:<16} shop: {} name: {} price: ￥{} tip: {}".format(pid, shop, name, price, item_over))
-            return 0
+            item_over = True if item_over is not None else False
+            return shop, name, price, item_over
         except requests.ConnectionError as e:
             self._logger.critical(str(e))
-            return -1
+            return None, None, None, None
 
-    def _get_shop_name(self, pid):
+    def get_shop_name(self, pid):
         shop_name = None
         product_name = None
         item_over = None
-        url = JDSpider.BASIC_URL + str(pid) + '.html'
-        response = requests.get(url, headers=JDSpider.HEADERS_NAME)
+        url = JDSpider.BASIC_URL + pid + '.html'
+        response = requests.get(url, headers=JDSpider.HEADERS_NAME, proxies=JDSpider.PROXY)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'lxml')
             shop_item = soup.find(class_='J-hove-wrap')
@@ -161,9 +165,9 @@ class JDSpider:
             self._logger.error("{:<16} shop/name request get fail, code: {}".format(pid, response.status_code))
         return shop_name, product_name, item_over
 
-    def _get_price(self, pid):
+    def get_price(self, pid: str):
         price = None
-        params = {"skuIds": 'J_' + str(pid)}
+        params = {"skuIds": 'J_' + pid}
         response = requests.get(JDSpider.PRICE_URL, headers=JDSpider.HEADERS_PRICE, params=params)
         if response.status_code == 200:
             res = json.loads(response.text)[0]
@@ -174,14 +178,14 @@ class JDSpider:
             self._logger.error("{:<16} price request get fail, code: {}".format(pid, response.status_code))
         return price
 
-    def _get_prices(self, pids: list):
+    def get_prices(self, pids):
         prices = None
-        pids_str = ",".join(['J_' + str(pid) for pid in pids])
+        pids_str = ",".join(['J_' + pid for pid in pids])
         params = {"skuIds": pids_str}
         response = requests.get(JDSpider.PRICE_URL, headers=JDSpider.HEADERS_PRICE, params=params)
         if response.status_code == 200:
             results = json.loads(response.text)
-            prices = [res.get('p') for res in results]
+            prices = [(res.get('id')[2:], res.get('p')) for res in results]
         else:
             self._logger.error("multiple prices request get fail, code: {}".format(response.status_code))
         return prices
