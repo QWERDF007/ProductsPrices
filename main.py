@@ -149,7 +149,7 @@ def query_products(logger, conn, logpath=None, step=25):
         prices += spider.get_prices(pids)
         start = i * 25
         end = start + len(pids)
-        logger.info("group_{}: {} - {}".format(i, start, end))
+        logger.info("group_{}: {} - {}".format(i, start+1, end))
     record_price(conn, prices)
     total = len(prices)
     for pid, price in prices:
